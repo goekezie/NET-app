@@ -1,1 +1,1 @@
-# commuinties of pipelines
+# communities of pipelines
