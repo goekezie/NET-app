@@ -50,6 +50,12 @@ stages:
   - job: Spinup
     pool:
       vmImage: 'ubuntu-latest'
+
+    variables:
+      AZURE_LOCATION:
+      AZURE_RESOURCE_GROUP:
+      AZURE_SUBSCRIPTION_ID:
+
     steps:
     - task: AzureCLI@2
       inputs:

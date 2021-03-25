@@ -1,0 +1,72 @@
+trigger:
+- '*'
+
+variables:
+  webRepository: 'web'
+  tag: '$(Build.BuildId)'
+  REGISTRY_NAME: "tailspin14559"
+  AZURE_WEBAPP_NAME: "tailspin-s-14559"
+  AZURE_SUBSCRIPTION_ID: '812866e1-7fdb-4a38-abda-bc40d7ffa85e'
+
+stages:
+- stage: Spinup
+  jobs:
+  - job: Spinup
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    variables: 
+      AZURE_RESOURCE_GROUP: 'tailspin-space-game-rg'
+      AZURE_APP_PLAN: 'tailspin-space-game-asp'
+  
+
+#create rg and acr first then automate d rest
+
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'Azuresub99devend(812866e1-7fdb-4a38-abda-bc40d7ffa85e)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az configure --defaults location=westus2
+          az group create  --name $(AZURE_RESOURCE_GROUP) 
+          az acr create --name $(REGISTRY_NAME) --resource-group $(AZURE_RESOURCE_GROUP) --sku standard --admin-enabled true
+          az appservice plan create --resource-group $(AZURE_RESOURCE_GROUP) --name $(AZURE_APP_PLAN) --sku B1  --is-linux
+          az webapp create --resource-group $(AZURE_RESOURCE_GROUP) --plan $(AZURE_APP_PLAN) --name $(AZURE_WEBAPP_NAME)  --deployment-container-image-name $REGISTRY_NAME.azurecr.io/web:latest
+
+- stage: 'Build'
+  displayName: 'Build and push'
+  jobs:  
+  - job: 'Build'
+    displayName: 'Build job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - task: Docker@2
+      displayName: 'Build and push the image to container registry'
+      inputs:
+        command: buildAndPush
+        buildContext: $(Build.Repository.LocalPath)
+        repository: $(webRepository)
+        dockerfile: '$(Build.SourcesDirectory)/Tailspin.SpaceGame.Web/Dockerfile'
+        containerRegistry: 'Container Registry Connection'
+        tags: |
+          $(tag)
+
+- stage: 'Deploy'
+  displayName: 'Deploy the container'
+  dependsOn: Build
+  jobs:
+  - job: 'Deploy'
+    displayName: 'Deploy job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    variables:
+    - group: Release
+    steps:
+    - task: AzureWebAppContainer@1
+      inputs:
+       appName: $(WebAppName)
+       azureSubscription: 'Resource Manager - Tailspin - Space Game'
+       imageName: $(RegistryName)/$(webRepository):$(build.buildId)
