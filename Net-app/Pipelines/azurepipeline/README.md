@@ -1,43 +1,60 @@
-* Azure resource settings for az-cicd-webapp.yml
-* Azure resource settings for az-cicd-docker.yml
-* Azure resource settings for az-cicd-kubernetes.yml
+# TABLE OF CONTENT
+
+* Azure resource configuration for az-cicd-webapp.yml
+* Azure resource configuration for az-cicd-docker.yml
+* Azure resource configuration for az-cicd-kubernetes.yml
 
 
 
-## az-cicd-docker.yml
-    In this file you are going to have to create two service connections for the pipeline to run correctly,
-    one for your azure resource manager and a seperate one for your azure container registry. Therefore you
-    would need to create the azure container registry before running the pipeline.
+## Configuration on azure for az-cicd-docker.yml
+In this file you are going to have to create two service connections for the pipeline to run correctly,
+one for your azure resource manager and a seperate one for your azure container registry. Therefore you
+would need to create the azure container registry before running the pipeline.
 
-    Use the command below to create the resource on azure cli also create matching variables with ones on the yaml file.
+Use the command below to create the resource on azure cli, also create matching variables with ones on the yaml file.
 
+* create variables in azure cli
 ```
 AZURE_RESOURCE_GROUP="tailspin-space-game-rg"
+
 REGISTRY_NAME="tailspin14559"
+```
+* create the azure resources using
+```
 az configure --defaults location=westus2
-az group create  --name $(AZURE_RESOURCE_GROUP) 
+
+az group create  --name $(AZURE_RESOURCE_GROUP)
+
 az acr create --name $(REGISTRY_NAME) --resource-group $(AZURE_RESOURCE_GROUP) --sku standard --admin-enabled true
 
 
 ```
 
 
-## az-cicd-kubernetes.yml
-    In this file you are going to have to create two service connections for the pipeline to run correctly,
-    one for your azure resource manager and a seperate one for your azure container registry. Therefore you
-    would need to create the azure container registry before running the pipeline.
+## Configuration on azure for az-cicd-kubernetes.yml file
 
-    Use the command below to create the resource on azure cli also create matching variables with ones on the yaml file.
+In this file you are going to have to create two service connections for the pipeline to run correctly,
+one for your azure resource manager and a seperate one for your azure container registry. Therefore you
+would need to create the azure container registry before running the pipeline.
 
+Use the command below to create the resource on azure cli, also create matching variables with ones on the yaml file.
+
+* create variables in azure cli
 ```
 AZURE_RESOURCE_GROUP="tailspin-space-game-rg"
+
 REGISTRY_NAME="tailspinspacegame9960"
+
 AKS_NAME="tailspinspacegame-9960"
+```
+* create the azure resources using
+
+```
 az configure --defaults location=westus2
-az group create  --name $(AZURE_RESOURCE_GROUP) 
+
+az group create  --name $(AZURE_RESOURCE_GROUP)
+
 az acr create --name $(REGISTRY_NAME) --resource-group $(AZURE_RESOURCE_GROUP) --sku standard --admin-enabled true
-
-
 ```
 <!-- Create a variable to store the ID of the service principal configured for the AKS instance.
 ```
