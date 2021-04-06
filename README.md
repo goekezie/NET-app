@@ -1,4 +1,4 @@
-# communities of pipelines
+# Collection of pipelines
 The List of sample applications
 * Django-app
 * Java-app
@@ -14,7 +14,7 @@ CI/CD Pipelines built for python-based application. Code for sample application 
 
 ## .NET-App
 
-CI/CD Pipelines built for .Net application. Code for sample application can be found [here](https://github.com/goekezie/mslearn-tailspin-spacegame-web)
+CI/CD Pipelines built for .Net application. Code for sample application can be found [here](https://github.com/goekezie/mslearn-tailspin-spacegame-web-deploy)
  
 
 
