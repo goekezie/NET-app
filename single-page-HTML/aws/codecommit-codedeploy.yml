@@ -1,0 +1,189 @@
+---
+Parameters:
+  SSHKey:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+  BranchName:
+    Description: CodeCommit branch name
+    Type: String
+    Default: main
+  RepositoryName:
+    Description: CodeComit repository name
+    Type: String
+    Default: myrepo
+  ApplicationName:
+    Description: CodeDeploy application name
+    Type: String
+    Default: DemoApplication
+  EC2TagValue:
+    Description: CodeDeploy application name
+    Type: String
+    Default: DemoApplication
+  EC2TagKey:
+    Description: CodeDeploy application name
+    Type: String
+    Default: function
+  BetaFleet:
+    Description: Fleet configured in CodeDeploy
+    Type: String
+    Default: DemoFleet
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-009d6802948d06e52
+      InstanceType: t2.micro
+      KeyName: !Ref SSHKey
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      # we install our web server with user data
+    Metadata:
+      Comment: Install a simple Apache HTTP page
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              httpd: []
+              ruby: []
+              aws-cli: []
+      UserData: 
+        Fn::Base64: |
+          yum -y update
+          cd /home/ec2-user
+          aws s3 cp s3://aws-codedeploy-us-east-1/latest/install . --region us-east-1
+          chmod +x ./install
+          ./install auto
+      Tags: 
+        - Key: "function"
+          Value: "DemoApplication"
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SSH and HTTP
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+
+#codecommit
+  codeCommitRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: repo for source code
+      RepositoryName: !Ref RepositoryName
+      # Code:
+      #   BranchName: !Ref BranchName
+      #   S3: 
+      #     Bucket: attackedtitan09,
+      #     Key: SampleApp_Linux.zip
+      #     ObjectVersion: hv6qY1Y5_0nHhVAa0yhPNAcut2IQjCJG
+  #codedeploy
+  codedeployment:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Ref ApplicationName
+      ComputePlatform: Server
+
+  codedeploymentgroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties: 
+      ApplicationName: !Ref ApplicationName
+      DeploymentGroupName: !Ref BetaFleets
+      Ec2TagFilters: 
+        - 
+          Key: 
+            Ref: EC2TagKey
+          Value: 
+            Ref: EC2TagValue
+          Type: "KEY_AND_VALUE"
+      ServiceRoleArn: 
+        Fn::GetAtt: CodeDeployServiceRole.Arn
+
+  CodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: AWSCodeDeployRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 
+                - 'autoscaling:CompleteLifecycleAction'
+                - 'autoscaling:DeleteLifecycleHook'
+                - 'autoscaling:DescribeAutoScalingGroups'
+                - 'autoscaling:DescribeLifecycleHooks'
+                - 'autoscaling:PutLifecycleHook'
+                - 'autoscaling:RecordLifecycleActionHeartbeat'
+                - 'autoscaling:CreateAutoScalingGroup'
+                - 'autoscaling:UpdateAutoScalingGroup'
+                - 'autoscaling:EnableMetricsCollection'
+                - 'autoscaling:DescribeAutoScalingGroups'
+                - 'autoscaling:DescribePolicies'
+                - 'autoscaling:DescribeScheduledActions'
+                - 'autoscaling:DescribeNotificationConfigurations'
+                - 'autoscaling:DescribeLifecycleHooks'
+                - 'autoscaling:SuspendProcesses'
+                - 'autoscaling:ResumeProcesses'
+                - 'autoscaling:AttachLoadBalancers'
+                - 'autoscaling:AttachLoadBalancerTargetGroups'
+                - 'autoscaling:PutScalingPolicy'
+                - 'autoscaling:PutScheduledUpdateGroupAction'
+                - 'autoscaling:PutNotificationConfiguration'
+                - 'autoscaling:PutLifecycleHook'
+                - 'autoscaling:DescribeScalingActivities'
+                - 'autoscaling:DeleteAutoScalingGroup'
+                - 'ec2:DescribeInstances'
+                - 'ec2:DescribeInstanceStatus'
+                - 'ec2:TerminateInstances'
+                - 'tag:GetResources'
+                - 'sns:Publish'
+                - 'cloudwatch:DescribeAlarms'
+                - 'cloudwatch:PutMetricAlarm'
+                - 'elasticloadbalancing:DescribeLoadBalancers'
+                - 'elasticloadbalancing:DescribeInstanceHealth'
+                - 'elasticloadbalancing:RegisterInstancesWithLoadBalancer'
+                - 'elasticloadbalancing:DeregisterInstancesFromLoadBalancer'
+                - 'elasticloadbalancing:DescribeTargetGroups'
+                - 'elasticloadbalancing:DescribeTargetHealth'
+                - 'elasticloadbalancing:RegisterTargets'
+                - 'elasticloadbalancing:DeregisterTargets'
+
+                Resource: '*'
+
+
+
+          # yum install -y ruby
+          # yum install -y aws-cli
+      # Deployment: 
+      #   Description: "First time"
+      #   IgnoreApplicationStopFailures: true
+      #   Revision:
+      #     RevisionType: Codecommit
+      #     S3Location: 
+      #       Bucket: 
+      #         Ref: Bucket
+      #       Key: 
+      #         Ref: Key
+      #       BundleType: Zip
+      #       ETag: 
+      #         Ref: ETag
+      #       Version: 
+      #         Ref: Version
