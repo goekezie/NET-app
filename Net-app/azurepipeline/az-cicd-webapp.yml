@@ -59,7 +59,7 @@ stages:
     steps:
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'Azuresub99devend(812866e1-7fdb-4a38-abda-bc40d7ffa85e)'
+        azureSubscription: 'yourSubscriptionName(your-subcription-id-xxx-xxxxxx)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
