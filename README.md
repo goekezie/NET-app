@@ -24,4 +24,4 @@ CI/CD Pipelines built for java application. Code for sample application can be f
  
 ## HTML page
 
-CI/CD Pipelines built for single HTML page.
+CI/CD Pipelines built for single HTML page. Code for sample application can be found [here](https://github.com/aws-samples/aws-codedeploy-samples/tree/master/applications/SampleApp_Linux)
